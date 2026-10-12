@@ -1,71 +1,31 @@
-require("dotenv").config();
 const express = require("express");
-const products = require("./products");
-const { User } = require("./models/user.model");
-const { Product } = require("./models/product.model");
+const cors = require("cors");
 
-const { connectMongoDB } = require("./config/mongodb.config");
+const products = require("./products");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.json());
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-
-});
-
 app.get("/products", (req, res) => {
-
   res.json(products);
 });
 
-app.post("/products", async (req, res) => {
-  try {
-    const product = await Product.create(req.body);
-    res.json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+app.get("/products/:id", (req, res) => {
+  const product = products.find(
+    (item) => item.id === Number(req.params.id)
+  );
 
-
-app.post("/auth/signup", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    const user = await User.create({
-      name,
-      email,
-      password
-    });
-
-    res.status(200).json({
-      message: "User created successfully"
-    });
-  } catch (error) {
-    res.status(400).json({
-      message: error
+  if (!product) {
+    return res.status(404).json({
+      message: "Product not found",
     });
   }
+
+  res.json(product);
 });
 
-
-
-app.post("/auth/logIn", (req, res) => {
-
-});
-
-const startServer = async () => {
-  await connectMongoDB();
-
-  app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-  });
-};
-
-startServer().catch((error) => {
-  console.error("Server startup failed:", error.message);
-  process.exit(1);
+app.listen(5000, () => {
+  console.log("Server running on http://localhost:5000");
 });
